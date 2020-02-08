@@ -46,7 +46,7 @@ const int RELAY_PIN = 27;
 const int ONBOARD_LED_PIN = 2;
 const int DHT_PIN = 26;
 DHTesp dht;
-int Tset = 40.0;
+int Tset = 72.0; //Use a number higher than 40 to avoid being on edge of screen fix for #2
 double Td = 0.5;
 
 int hys=0;
@@ -62,7 +62,7 @@ time_t currentTime = 0,startTime=0;
 hw_timer_t *timer = NULL;
 
 void IRAM_ATTR resetModule(){
-    ets_printf("reboot\n");
+    //ets_printf("reboot\n"); //comment out to avoid issues fix #1
     //esp_restart_noos();
     esp_restart();
 }
@@ -185,7 +185,7 @@ void setUpWifi() {
 //Create a timer for watchdog timer  
 timer = timerBegin(0, 80, true); //timer 0, div 80
     timerAttachInterrupt(timer, &resetModule, true);
-    timerAlarmWrite(timer, 3000000, false); //set time in us
+    timerAlarmWrite(timer, 15000000, false); //set time in us to 15 seconds fixes #1
     timerAlarmEnable(timer); //enable interrupt
 
 }
@@ -212,7 +212,7 @@ ArduinoOTA.handle();
     client = server.available();
     if (client.connected()) {
       digitalWrite(ONBOARD_LED_PIN, HIGH);
-      client.setTimeout(1);  //set timeout to 1 second - must be done after connecting
+      client.setTimeout(5);  //set timeout to 5 second - must be done after connecting fix #1
       String req = client.readStringUntil('\r');  //read first line
       Serial.println("Received request: " + req);
       
@@ -295,6 +295,7 @@ ArduinoOTA.handle();
       control=client.parseInt();
       Serial.println("parsing complete");
 
+
       
       
      
@@ -359,7 +360,7 @@ ArduinoOTA.handle();
 
 
 
- if(startTime==0)
+ if(startTime<24*60*60) //Check if start time is less than 24 hrs, meaning no internet time fix #1
       {
         setTime(webUnixTime());
         setSyncProvider(webUnixTime);
@@ -405,6 +406,3 @@ ArduinoOTA.handle();
             digitalWrite(RELAY_PIN, HIGH);
         }
 }
-
-
-
